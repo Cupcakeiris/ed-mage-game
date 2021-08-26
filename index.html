@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.15.1/dist/phaser-arcade-physics.min.js"></script>
+</head>
+
+<script>
+
+var config = {
+    type: Phaser.AUTO,
+    width: 800,
+    height: 600,
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 450 },
+            debug: false
+        }
+    },
+    scene: {
+        preload: preload,
+        create: create,
+        update: update
+    }
+};
+
+var player;
+var gems;
+var slimes;
+var platforms;
+var cursors;
+var score = 0;
+var gameOver = false;
+var scoreText;
+var pick;
+var enemy;
+var mag;
+
+var game = new Phaser.Game(config);
+
+function preload ()
+{
+    this.load.image('sky', 'assets/scene.png');
+    this.load.image('ground', 'assets/platform.png');
+    this.load.image('gem', 'assets/gem.png');
+    this.load.image('slime', 'assets/slime.png');
+    this.load.image('mage', 'assets/mage.png');
+    this.load.audio('pick', ['assets/pickup.mp3']);
+    this.load.audio('enemy', ['assets/slime.mp3']);
+    this.load.audio('mag', ['assets/mag.mp3']);
+}
+
+function create ()
+{   
+    //  A simple background 
+    this.add.image(400, 300, 'sky');
+
+    // Sounds
+    pick = this.sound.add("pick", { loop: false });
+    enemy = this.sound.add("enemy", { loop: false });
+    mag = this.sound.add("mag", { loop: true });
+
+    mag.play();
+
+    //  The platforms
+    platforms = this.physics.add.staticGroup();
+    platforms.create(400, 560, 'ground').refreshBody();
+
+    // The player and its settings
+    player = this.physics.add.sprite(100, 450, 'mage');
+    player.setCollideWorldBounds(true);
+
+
+    //  Input Events
+    cursors = this.input.keyboard.createCursorKeys();
+
+
+    //  Some gems to collect
+    gems = this.physics.add.group({
+        key: 'gem',
+        repeat: 9,
+        setXY: { x: 12, y: 0, stepX: 80 }
+    });
+
+    gems.children.iterate(function (child) {
+        child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
+    });
+
+    slimes = this.physics.add.group();
+
+    //  The score
+    scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#000' });
+
+    //  Colliders
+    this.physics.add.collider(player, platforms);
+    this.physics.add.collider(gems, platforms);
+    this.physics.add.collider(slimes, platforms);
+
+    //  Destroys gems/slimes when user interacts with them
+    this.physics.add.overlap(player, gems, collectgem, null, this);
+
+    this.physics.add.collider(player, slimes, hitslime, null, this);
+}
+
+function update ()
+{
+    if (gameOver)
+    {
+        window.location.href = window.location.href; // Reloads page complete
+    }
+
+    if (cursors.left.isDown) // Movement
+    {
+        player.setVelocityX(-220);
+    }
+    else if (cursors.right.isDown)
+    {
+        player.setVelocityX(220);
+    }
+    else
+    {
+        player.setVelocityX(0);
+    }
+
+    if (cursors.up.isDown && player.body.touching.down)
+    {
+        player.setVelocityY(-300);
+    }
+}
+
+function collectgem (player, gem)
+{
+    pick.play()
+    gem.disableBody(true, true);
+
+    //  Add and update the score
+    score += 1;
+    scoreText.setText('Score: ' + score);
+
+    if (gems.countActive(true) === 0)
+    {
+        //  A new gems to collect
+        gems.children.iterate(function (child) {
+            child.enableBody(true, child.x, 0, true, true);
+        });
+
+        var x = (player.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
+
+        var slime = slimes.create(x, 16, 'slime');
+        slime.setBounce(1);
+        slime.setCollideWorldBounds(true);
+        slime.setVelocity(Phaser.Math.Between(-200, 200), 20);
+        slime.allowGravity = false;
+
+    }
+}
+
+function hitslime (player, slime) // Same logic as collectgem
+{
+    enemy.play();
+    this.physics.pause();
+    player.setTint(0xff0000);
+    gameOver = true;
+}
+</script>
+
+<body>
+
+</body>
+</html>
