@@ -35,6 +35,7 @@ var scoreText;
 var pick;
 var enemy;
 var mag;
+var hit = 0;
 
 var game = new Phaser.Game(config);
 
@@ -45,6 +46,11 @@ function preload ()
     this.load.image('gem', 'assets/gem.png');
     this.load.image('slime', 'assets/slime.png');
     this.load.image('mage', 'assets/mage.png');
+
+    this.load.image('1','assets/flame.png');
+    this.load.image('2','assets/flame.png');
+    this.load.image('3','assets/flame.png');
+
     this.load.audio('pick', ['assets/pickup.mp3']);
     this.load.audio('enemy', ['assets/slime.mp3']);
     this.load.audio('mag', ['assets/mag.mp3']);
@@ -54,6 +60,11 @@ function create ()
 {   
     //  A simple background 
     this.add.image(400, 300, 'sky');
+
+    // Life icons
+    f1 = this.add.image(640, 30, '1');
+    f2 = this.add.image(700, 30, '2');
+    f3 = this.add.image(760, 30, '3');
 
     // Sounds
     pick = this.sound.add("pick", { loop: false });
@@ -99,15 +110,27 @@ function create ()
     //  Destroys gems/slimes when user interacts with them
     this.physics.add.overlap(player, gems, collectgem, null, this);
 
-    this.physics.add.collider(player, slimes, hitslime, null, this);
+    this.physics.add.overlap(player, slimes, hitslime, null, this);
 }
 
 function update ()
 {
-    if (gameOver)
-    {
+    if (hit == 4)
+    {   
+        player.setTint(0xff0000);
+        this.physics.pause();
         window.location.href = window.location.href; // Reloads page complete
     }
+
+    // Disabling souls (hearts)
+    if (hit == 1){
+        f1.destroy();
+    } else if(hit == 2){
+        f2.destroy();
+    } else if(hit == 3){
+        f3.destroy();
+    }
+
 
     if (cursors.left.isDown) // Movement
     {
@@ -158,9 +181,8 @@ function collectgem (player, gem)
 function hitslime (player, slime) // Same logic as collectgem
 {
     enemy.play();
-    this.physics.pause();
-    player.setTint(0xff0000);
-    gameOver = true;
+    hit += 1;
+    slime.disableBody(true, true);
 }
 </script>
 
