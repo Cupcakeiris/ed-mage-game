@@ -1,4 +1,5 @@
 # ed-mage-game
-mini game for angular site
+mini game for edgermanflex angular site
 
-eeeee idk
+idk
+all my codes are always messy
